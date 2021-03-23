@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="style/style.css" />
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css' integrity='sha512-P5MgMn1jBN01asBgU0z60Qk4QxiXo86+wlFahKrsQf37c9cro517WzVSPPV1tDKzhku2iJ2FVgL67wG03SGnNA==' crossorigin='anonymous' />
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js' integrity='sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==' crossorigin='anonymous'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.js' integrity='sha512-YXLGLsQBiwHPHLCAA9npZWhADUsHECjkZ71D1uzT2Hpop82/eLnmFb6b0jo8pK4T0Au0g2FETrRJNblF/46ZzQ==' crossorigin='anonymous'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/dexie/3.0.3/dexie.min.js' integrity='sha512-aEtNzq8X5E0ambgeM68H174SOXaANJ6wDqJ0TuVIx4R2J4fRdUA0nLzx0faA1mmViqb+r0VX7cOXkskxyJENUA==' crossorigin='anonymous'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.bundle.min.js' integrity='sha512-wV7Yj1alIZDqZFCUQJy85VN+qvEIly93fIQAN7iqDFCPEucLCeNFz4r35FCo9s6WrpdDQPi80xbljXB8Bjtvcg==' crossorigin='anonymous'></script>
+    <title>MERCADO</title>
+</head>
+
+<body id="bgg">
+    <h1 id="title"> GREENFOOD HORTIFRUTI </h1>
+    <br>
+    <div id="flip"> <button class="button">Registrar/Atualizar Produto</button></div>
+    <div id="app" class="container">
+        <fieldset id="panel">
+
+            <div>
+                <div class="teste">
+                    <div>
+                        <label>Tipo:</label>
+                        <select class="form-select form-control" name="produto" id="selecProduto" v-model="produtos.tipo">
+                            <option value="fruta">Fruta</option>
+                            <option value="verdura">Verdura</option>
+                            <option value="legume">Legume</option>
+                            <option value="grão">Grão</option>
+                            <option value="latc">Laticínio</option>
+                            <option value="oleos">Óleo</option>
+                            <option value="proteina">Proteína</option>
+                            <option value="liquido">Líquido</option>
+                            <option value="processado">Processado</option>
+                        </select>
+
+                    </div>
+                    <div>
+                        <label>Nome:</label>
+                        <input class="form-control" type="text" v-model="produtos.nome" />
+                    </div>
+
+                    <div>
+                        <label>Fornecedor:</label>
+                        <input class="form-control" type="text" v-model="produtos.fornecedor" />
+                    </div>
+
+                    <div>
+                        <label>Preço UND:</label>
+                        <input class="form-control" type="number" v-model="produtos.valor" />
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div>
+                    <button class="btn btn-primary space_button" v-on:click="addProdutos">Salvar</button>
+                    <button class="btn btn-primary space_button" v-on:click="resetProdutos">Cancelar</button>
+                </div>
+            </div>
+
+        </fieldset>
+        <br>
+        <input class="form-control" id="myInput" type="text" placeholder="Search..">
+        <div id="scrollbar">
+            <table class="table table-striped table-hover">
+                <tr>
+                    <thead>
+                        <th>ID</th>
+                        <th>Tipo</th>
+                        <th>Nome</th>
+                        <th>Fornecedor</th>
+                        <th>Valor R$</th>
+                        <th></th>
+                    </thead>
+                </tr>
+
+                <tbody id="myTable">
+                    <tr v-for="a in listaProdutos">
+                        <td>{{a.id}}</td>
+                        <td>{{a.tipo}}</td>
+                        <td>{{a.nome}}</td>
+                        <td>{{a.fornecedor}}</td>
+                        <td>{{a.valor}}</td>
+                        <td>
+                            <button class="btn btn-info" v-on:click="seleceProduto(a)">Editar</button>
+                            <button class="btn btn-danger" v-on:click="removerProduto(a)">Remover</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        var vapp = new Vue({
+            el: '#app',
+            data: {
+                baseDados: null,
+                produtos: {
+                    tipo: null,
+                    nome: null,
+                    fornecedor: null,
+                    valor: null
+                },
+                listaProdutos: []
+            },
+            mounted: function() {
+                this.baseDados = new Dexie("baseProdutos");
+                this.baseDados.version(1).stores({
+                    tbProdutos: '++id, nome'
+                });
+                this.listarProdutos();
+            },
+            methods: {
+                resetProdutos: function() {
+                    this.produtos = {
+                        nome: null
+                    };
+                },
+                addProdutos: function() {
+                    var _this = this;
+                    if (this.produtos.id == null) {
+                        _this.baseDados.tbProdutos.add(_this.produtos).then(function(retorno) {
+                            alert('Produto Registrado');
+                            _this.resetProdutos();
+                            _this.listarProdutos();
+                        });
+                    } else {
+                        _this.baseDados.tbProdutos.update(_this.produtos.id, _this.produtos).then(function(retorno) {
+                            alert('Produto Atualizado');
+                            _this.resetProdutos();
+                            _this.listarProdutos();
+                        });
+                    }
+                },
+                listarProdutos: function() {
+                    var _this = this;
+                    _this.baseDados.tbProdutos.toArray().then(function(retorno) {
+                        _this.listaProdutos = retorno;
+                    });
+                },
+                removerProduto: function(a) {
+                    var _this = this;
+                    _this.baseDados.tbProdutos.delete(a.id).then(function(retorno) {
+                        alert('Produto Removido');
+                        _this.listarProdutos();
+                    });
+                },
+                seleceProduto: function(a) {
+                    this.produtos = a;
+                }
+            }
+        });
+        $(document).ready(function() {
+            $("#flip").click(function() {
+                $("#panel").slideToggle("slow");
+            });
+        });
+        $(document).ready(function() {
+            $("#myInput").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("#myTable tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+        });
+    </script>
+
+</body>
+
+</html>
